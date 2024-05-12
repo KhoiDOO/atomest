@@ -1,7 +1,7 @@
 from ds import get_data_numpy, get_data_tgeo
 from models import get_model
 
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, median_absolute_error
 
 import numpy as np
 import json
@@ -25,7 +25,11 @@ def folder_setup(args):
 
     run_name = get_hash(args)
 
-    save_dir = os.getcwd() + "/runs"
+    run_dir = os.getcwd() + "/runs"
+    if not os.path.exists(run_dir):
+        os.mkdir(run_dir)
+    
+    save_dir = run_dir + f"/{run_name}"
     if not os.path.exists(save_dir):
         os.mkdir(save_dir)
     
@@ -39,6 +43,10 @@ def ml_train(args):
     save_dir = folder_setup(args)
 
     Xs, Ts = get_data_numpy()
+
+    print(Xs.shape, Ts.shape)
+    print(Xs.min(), Ts.min())
+    print(Xs.max(), Ts.max())
 
     fold_cnt = Xs.shape[0]
 
@@ -66,7 +74,12 @@ def ml_train(args):
         T_tpred = model.predict(X_train)
         T_vpred = model.predict(X_valid)
 
-        train_score = mean_squared_error(T_tpred, T_train)
-        valid_score = mean_squared_error(T_vpred, T_valid)
+        train_mse = mean_squared_error(T_tpred, T_train)
+        valid_mse = mean_squared_error(T_vpred, T_valid)
 
-        print(f"MSE - {fold_idx}", train_score, valid_score)
+        print(f"MSE - {fold_idx}", train_mse, valid_mse)
+
+        train_mae = mean_squared_error(T_tpred, T_train)
+        valid_mae = mean_squared_error(T_vpred, T_valid)
+
+        print(f"MAE - {fold_idx}", train_mae, valid_mae)
