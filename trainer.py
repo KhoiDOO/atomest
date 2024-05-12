@@ -4,7 +4,6 @@ from models import get_model
 from sklearn.metrics import mean_squared_error, median_absolute_error
 
 from torch_geometric.loader import DataLoader
-from torch_geometric.data import Dataset
 
 from torch.optim import Adam
 from torch.nn import MSELoss, L1Loss
@@ -49,13 +48,15 @@ def ml_train(args):
 
     save_dir = folder_setup(args)
 
-    Xs, Ts = get_data_numpy()
+    Xs, Ts, scale = get_data_numpy()
 
     print(Xs.shape, Ts.shape)
     print(Xs.min(), Ts.min())
     print(Xs.max(), Ts.max())
 
     fold_cnt = Xs.shape[0]
+
+    log = {}
 
     for fold_idx in range(fold_cnt):
 
@@ -81,15 +82,19 @@ def ml_train(args):
         T_tpred = model.predict(X_train)
         T_vpred = model.predict(X_valid)
 
-        train_mse = mean_squared_error(T_tpred, T_train)
-        valid_mse = mean_squared_error(T_vpred, T_valid)
+        train_mse = mean_squared_error(T_tpred, T_train).item()
+        valid_mse = mean_squared_error(T_vpred, T_valid).item()
 
         print(f"MSE - {fold_idx}", train_mse, valid_mse)
 
-        train_mae = median_absolute_error(T_tpred, T_train)
-        valid_mae = median_absolute_error(T_vpred, T_valid)
+        train_mae = median_absolute_error(T_tpred, T_train).item()
+        valid_mae = median_absolute_error(T_vpred, T_valid).item()
 
         print(f"MAE - {fold_idx}", train_mae, valid_mae)
+
+        log[fold_idx] = {'train_mse' : train_mse, 'train_mae' : train_mae, 'valid_mse' : valid_mse, 'valid_mae' : valid_mae}
+
+    save_json(log, save_dir + "/results.json")
 
 
 def graph_train(args):
@@ -101,7 +106,7 @@ def graph_train(args):
     criterion = MSELoss()
     metric = L1Loss()
 
-    folds = get_data_tgeo()
+    folds, scale = get_data_tgeo()
 
     print(f"#Folds: {len(folds)}")
 
@@ -136,7 +141,7 @@ def graph_train(args):
                 loss.backward()
                 optimizer.step()
 
-                train_total_mse += loss.item() / len(train_ld)
+                train_total_mse += criterion(out, data.y).item() / len(train_ld)
                 train_total_mae += metric(out, data.y).item() / len(train_ld)
         
             model.eval()
@@ -148,7 +153,7 @@ def graph_train(args):
                     out = model(data.x, data.edge_index, data.edge_attr, data.batch)
                     loss = criterion(out, data.y)
 
-                    valid_total_mse += loss.item() / len(valid_ld)
+                    valid_total_mse += criterion(out, data.y).item() / len(valid_ld)
                     valid_total_mae += metric(out, data.y).item() / len(valid_ld)
             
             print(f"\tMSE - {fold_idx}", train_total_mse, valid_total_mse)
@@ -157,4 +162,4 @@ def graph_train(args):
             log[fold_idx].append({'train_mse' : train_total_mse, 'train_mae' : train_total_mae, 'valid_mse' : valid_total_mse, 'valid_mae' : valid_total_mae})
 
 
-    save_json(log, save_dir + "results.json")
+    save_json(log, save_dir + "/results.json")

@@ -1,4 +1,9 @@
-from sklearn.linear_model import LinearRegression, Ridge, Lasso
+from sklearn.linear_model import LinearRegression, Ridge, Lasso, BayesianRidge, LogisticRegression
+from sklearn.svm import SVR
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
 
 from torch import nn
 from torch.nn import Linear
@@ -28,12 +33,30 @@ class GCN(nn.Module):
         x = F.dropout(x, p=0.5, training=self.training)
         x = self.lin(x)
         
-        return x.unsqueeze(-1)
+        return x.squeeze(-1)
 
 
 def get_model(args):
     if args.m == 'lr':
         return LinearRegression()
+    elif args.m == 'lasso':
+        return Lasso()
+    elif args.m == 'ridge':
+        return Ridge()
+    elif args.m == 'bayridge':
+        return BayesianRidge()
+    elif args.m == 'lor':
+        return LogisticRegression()
+    elif args.m == 'svm':
+        return SVR()
+    elif args.m == 'knn':
+        return KNeighborsRegressor()
+    elif args.m == 'gpr':
+        return GaussianProcessRegressor()
+    elif args.m == 'dt':
+        return DecisionTreeRegressor()
+    elif args.m == 'rf':
+        return RandomForestRegressor()
     elif args.m == 'graph':
         return GCN(in_features=3, hidden_features=args.hidden_features)
     else:

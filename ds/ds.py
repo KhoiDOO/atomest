@@ -78,15 +78,19 @@ def get_data_numpy():
 
     X_norm = (X-mean)/std
 
-    T_norm = T.flatten() / T.max()
+    scale = np.absolute(T.min()).item()
+
+    T_norm = T.flatten() / scale
 
     Xs, Ts = X_norm[P], T_norm[P]
 
-    return Xs, Ts
+    return Xs, Ts, scale
 
 def get_data_tgeo():
 
     save_path = "/".join(__file__.split("/")[:-1]) + "/src/data.pickle"
+
+    _, _, scale = get_data_numpy()
     
     if not os.path.exists(save_path):
     
@@ -122,12 +126,12 @@ def get_data_tgeo():
         
         save_pickle({'data' : folds}, save_path)
 
-        return folds
+        return folds, scale
     
     else:
         folds = read_pickle(save_path)['data']
 
-        return folds
+        return folds, scale
 
 
 if __name__ == "__main__":

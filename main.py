@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.m in ['lr']:
+    if args.m in ['lr', 'lasso', 'ridge', 'bayridge', 'lor', 'svm', 'knn', 'gpr', 'dt', 'rf']:
         ml_train(args)
     elif args.m in ['graph']:
         graph_train(args)
