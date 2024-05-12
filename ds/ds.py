@@ -41,11 +41,14 @@ def make_graphs(X_fold, T_fold, R_fold):
     lst = []
 
     for x, t, r in tqdm(zip(X_fold, T_fold, R_fold)):
-        adj_mat = torch.masked_fill(x != 0, torch.eye(23, 23, dtype=torch.bool), 0)
+        # adj_mat = torch.masked_fill(x != 0, torch.eye(23, 23, dtype=torch.bool), 0)
 
-        edge_index = torch.argwhere(adj_mat).T
+        mask = x != 0 
+        mask_flat = mask.flatten()
 
-        edge_attr = x.flatten().unsqueeze(-1)
+        edge_index = torch.argwhere(x != 0).T
+
+        edge_attr = x.flatten()[mask_flat].unsqueeze(-1)
 
         data = Data(x=r, edge_index=edge_index, edge_attr=edge_attr, y=t)
 
@@ -96,11 +99,11 @@ def get_data_tgeo():
         T = dataset['T']
         P = dataset['P']
 
-        T = T.flatten() / T.max()
-
         X = torch.from_numpy(X)
         T = torch.from_numpy(T)
         R = torch.from_numpy(R)
+
+        T = T.flatten() / T.min().abs()
 
         X_max = X.max(dim=0).values
 
@@ -128,16 +131,18 @@ def get_data_tgeo():
 
 
 if __name__ == "__main__":
-    # Xs, Ts = get_data_numpy()
+    Xs, Ts = get_data_numpy()
 
-    # print(Xs.shape)
-    # print(Ts.shape)
+    print(Xs.shape)
+    print(Ts.shape)
 
     folds = get_data_tgeo()
 
+    print(len(folds))
+
     sample_fold = folds[0]
 
-    print(sample_fold)
+    print(len(sample_fold))
 
     sample_data = sample_fold[0]
 
